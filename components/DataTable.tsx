@@ -1,5 +1,5 @@
 import React from 'react';
-import { Assessment, SusAssessment } from '../types';
+import { Assessment } from '../types';
 
 interface DataTableProps {
     assessments: Assessment[];
@@ -44,11 +44,14 @@ const DataTable: React.FC<DataTableProps> = ({ assessments, onClearAll, onExport
                             <th scope="col" className="px-6 py-4 font-semibold">Product</th>
                             <th scope="col" className="px-6 py-4 font-semibold">Type</th>
                             <th scope="col" className="px-6 py-4 font-semibold">Score</th>
+                            <th scope="col" className="px-6 py-4 font-semibold">Duration (s)</th>
                             <th scope="col" className="px-6 py-4 font-semibold">Date</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-                        {assessments.slice().reverse().map(item => (
+                        {assessments.slice().reverse().map(item => {
+                             const totalTime = item.times ? item.times.reduce((a, b) => a + b, 0).toFixed(1) : '-';
+                             return (
                             <tr key={item.id} className="bg-white/50 dark:bg-slate-800/30 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                                 <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{item.participant}</td>
                                 <td className="px-6 py-4">{item.product}</td>
@@ -60,9 +63,12 @@ const DataTable: React.FC<DataTableProps> = ({ assessments, onClearAll, onExport
                                 <td className="px-6 py-4 font-serif text-lg text-slate-800 dark:text-slate-200">
                                     {item.type === 'SUS' ? item.totalScore.toFixed(1) : `${item.results[0].mean.toFixed(2)}`}
                                 </td>
+                                <td className="px-6 py-4 font-mono text-slate-600 dark:text-slate-400">
+                                    {totalTime}
+                                </td>
                                 <td className="px-6 py-4 text-xs font-medium opacity-70">{item.timestamp}</td>
                             </tr>
-                        ))}
+                        )})}
                     </tbody>
                 </table>
             ) : (

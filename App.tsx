@@ -44,6 +44,8 @@ function App() {
 
   // SUS State
   const [susScores, setSusScores] = useState<number[]>(Array(SUS_QUESTIONS.length).fill(0));
+  const [susTimes, setSusTimes] = useState<number[]>(Array(SUS_QUESTIONS.length).fill(0));
+
   const susScore = useMemo(() => {
     if (susScores.some(s => s === 0)) {
       return null;
@@ -61,6 +63,8 @@ function App() {
 
   // UEQ State
   const [ueqScores, setUeqScores] = useState<number[]>(Array(UEQ_ITEM_PAIRS.length).fill(0));
+  const [ueqTimes, setUeqTimes] = useState<number[]>(Array(UEQ_ITEM_PAIRS.length).fill(0));
+
   const ueqResults = useMemo((): UeqResult[] | null => {
     if (ueqScores.some(s => s === 0)) {
       return null;
@@ -101,17 +105,31 @@ function App() {
     newScores[questionIndex] = value;
     setSusScores(newScores);
   };
+  
+  const handleSusTimeChange = (questionIndex: number, time: number) => {
+      const newTimes = [...susTimes];
+      newTimes[questionIndex] = (newTimes[questionIndex] || 0) + time;
+      setSusTimes(newTimes);
+  };
 
   const handleUeqScoreChange = (questionIndex: number, value: number) => {
     const newScores = [...ueqScores];
     newScores[questionIndex] = value;
     setUeqScores(newScores);
   };
+
+  const handleUeqTimeChange = (questionIndex: number, time: number) => {
+    const newTimes = [...ueqTimes];
+    newTimes[questionIndex] = (newTimes[questionIndex] || 0) + time;
+    setUeqTimes(newTimes);
+};
   
   const handleClearForm = () => {
     // Note: We deliberately do NOT clear participant/product to allow rapid entry for same session
     setSusScores(Array(SUS_QUESTIONS.length).fill(0));
+    setSusTimes(Array(SUS_QUESTIONS.length).fill(0));
     setUeqScores(Array(UEQ_ITEM_PAIRS.length).fill(0));
+    setUeqTimes(Array(UEQ_ITEM_PAIRS.length).fill(0));
   }
 
   const handleAddAssessment = () => {
@@ -137,6 +155,7 @@ function App() {
         ...commonData,
         type: 'SUS',
         scores: susScores,
+        times: susTimes,
         totalScore: susScore
       }
     } else {
@@ -148,6 +167,7 @@ function App() {
         ...commonData,
         type: 'UEQ',
         scores: ueqScores,
+        times: ueqTimes,
         results: ueqResults
       }
     }
@@ -175,13 +195,20 @@ function App() {
     if (susData.length > 0) {
         const flattenedSus = susData.map(d => {
             const scoresObj: {[key: string]: number} = {};
-            d.scores.forEach((s, i) => scoresObj[`Q${i+1}`] = s);
+            const timesObj: {[key: string]: number} = {};
+            d.scores.forEach((s, i) => scoresObj[`Q${i+1} Score`] = s);
+            d.times.forEach((t, i) => timesObj[`Q${i+1} Time (s)`] = parseFloat(t.toFixed(1)));
+            
+            const totalTime = d.times.reduce((a, b) => a + b, 0);
+
             return {
                 Participant: d.participant,
                 Product: d.product,
                 Timestamp: d.timestamp,
                 'SUS Score': d.totalScore,
+                'Total Time (s)': parseFloat(totalTime.toFixed(1)),
                 ...scoresObj,
+                ...timesObj
             };
         });
         const wsSus = XLSX.utils.json_to_sheet(flattenedSus);
@@ -191,15 +218,23 @@ function App() {
     if (ueqData.length > 0) {
         const flattenedUeq = ueqData.map(d => {
             const scoresObj: {[key: string]: number} = {};
-            d.scores.forEach((s, i) => scoresObj[`Item ${i+1}`] = s);
+            const timesObj: {[key: string]: number} = {};
+            d.scores.forEach((s, i) => scoresObj[`Item ${i+1} Score`] = s);
+            d.times.forEach((t, i) => timesObj[`Item ${i+1} Time (s)`] = parseFloat(t.toFixed(1)));
+            
             const resultsObj: {[key: string]: number} = {};
             d.results.forEach(r => resultsObj[r.scale] = parseFloat(r.mean.toFixed(2)));
+
+            const totalTime = d.times.reduce((a, b) => a + b, 0);
+
             return {
                 Participant: d.participant,
                 Product: d.product,
                 Timestamp: d.timestamp,
+                'Total Time (s)': parseFloat(totalTime.toFixed(1)),
                 ...resultsObj,
                 ...scoresObj,
+                ...timesObj
             };
         });
         const wsUeq = XLSX.utils.json_to_sheet(flattenedUeq);
@@ -268,12 +303,20 @@ function App() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
               
               {/* Main Questionnaire Card */}
-              <div className="lg:col-span-2 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md p-6 md:p-8 rounded-2xl shadow-xl border border-white/20 dark:border-white/10 relative overflow-hidden">
+              <div className="lg:col-span-2 bg-white/70 dark:bg-slate-800/60 backdrop-blur-md p-6 md:p-8 rounded-2xl shadow-xl border border-white/20 dark:border-white/10 relative overflow-hidden min-h-[400px] flex flex-col">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary-400 via-purple-500 to-primary-600"></div>
                 {activeQuestionnaire === 'SUS' ? (
-                  <Questionnaire scores={susScores} onScoreChange={handleSusScoreChange} />
+                  <Questionnaire 
+                    scores={susScores} 
+                    onScoreChange={handleSusScoreChange} 
+                    onTimeUpdate={handleSusTimeChange}
+                  />
                 ) : (
-                  <UeqQuestionnaire scores={ueqScores} onScoreChange={handleUeqScoreChange} />
+                  <UeqQuestionnaire 
+                    scores={ueqScores} 
+                    onScoreChange={handleUeqScoreChange} 
+                    onTimeUpdate={handleUeqTimeChange}
+                  />
                 )}
               </div>
 
