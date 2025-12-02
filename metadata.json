@@ -1,0 +1,5 @@
+{
+  "name": "SUS/UEQ Assessment Tool",
+  "description": "A tool to conduct System Usability Scale (SUS) assessments, calculate scores, record data in a tabular format, and export results to an Excel file. It provides instant feedback on usability with standardized metrics.",
+  "requestFramePermissions": []
+}
