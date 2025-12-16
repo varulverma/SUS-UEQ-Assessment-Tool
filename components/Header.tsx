@@ -34,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({ darkMode, setDarkMode }) => {
                 <ChartBarIcon className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
             <h1 className="text-2xl font-serif font-medium text-slate-800 dark:text-slate-100 tracking-tight">
-              SUS Assessment Tool
+              SUS & UEQ Assessment Tool
             </h1>
         </div>
         <button
